@@ -1,0 +1,1 @@
+num_route_experts = 0;prune_layer_num = 9
