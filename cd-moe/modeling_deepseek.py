@@ -392,64 +392,31 @@ class AddAuxiliaryLoss(torch.autograd.Function):
         return grad_output, grad_loss
 
 
+# hyper parameters
 layer_num = 27
 # num_route_experts = 0
 # prune_layer_num = 9
-trim_layer_num = 0
 
-condense_layer_num = prune_layer_num - trim_layer_num
-# layer_num -= trim_layer_num
-
+# greedy search layer result
 if num_route_experts == 6:
-    condense_layer_order = [19, 15, 22, 10, 12, 6, 14, 21, 26, 7, 17, 1, 24, 23, 9]  # js greedy search
-    # condense_layer_order = [6, 19, 15, 22, 10, 18, 12, 26, 9, 23, 14, 21, 0, 24, 11]  # kl
-    # condense_layer_order = [25, 24, 7, 20, 1, 16, 12, 19, 6, 15, 10, 9, 18, 13, 2]  # ppl
-    # condense_layer_order = [15, 19, 6, 10, 18, 7, 12, 22, 14, 9, 5, 17, 21, 8, 11,\
-    #                           4, 3, 20, 23, 13, 16, 1, 2, 26, 24, 25, 0]  # js global sort
-    # condense_layer_order = [1, 3, 2, 4, 5, 6, 8, 22, 21, 7, 16, 20, 19, 15, 23, \
-    #                         18, 17, 10, 0, 12, 11, 9, 14, 24, 13, 26, 25]  # js local sort
-    # condense_layer_order = [8, 18, 16, 0, 23, 20, 11, 26, 24, 17, 15, 6, 9, \
-    #                         19, 22, 3, 25, 14, 4, 13, 1, 7, 5, 21, 12, 2, 10]  # random
-    # condense_layer_order = [15, 10, 6, 22, 20, 12, 9, 26, 21, 19, 16, 24, 8, 11, \
-    #                         23, 7, 17, 13, 5, 3, 18, 0, 14, 4, 25, 1]  # expert l1 + layer greedy
-    # condense_layer_order = [15, 22, 6, 18, 12, 19, 10, 21, 26, 9, 23, 20, 11, 3,\
-    #                          25, 16, 13, 8, 0, 24, 5, 7, 14, 17, 4, 2]  # route l1 + layer greedy
-else:
+    condense_layer_order = [19, 15, 22, 10, 12, 6, 14, 21,
+                            26, 7, 17, 1, 24, 23, 9]  # js greedy search order
+elif num_route_experts == 0:
     condense_layer_order = [19, 12, 7, 23, 10, 14,
-                                    1, 24, 17, 15, 9, 21, 18, 6, 26]
+                            1, 24, 17, 15, 9, 21, 18, 6, 26]
 
-layer_trim_layer_order = [22, 23, 21, 20,
-                             19, 18, 24, 15, 16, 17, 14, 13, 12, 11, 8]
-
-# 确定剪枝的层
-trim_layer_idxs = layer_trim_layer_order[:trim_layer_num]
-layer_map_trim = {}
-new_layer_idx = 0
-for origin_layer_idx in range(27):
-    if origin_layer_idx in trim_layer_idxs:
-        continue
-    layer_map_trim[origin_layer_idx] = new_layer_idx
-    new_layer_idx += 1
-condense_layer_order = list(filter(lambda x: x not in trim_layer_idxs, condense_layer_order))
-prune_layer_idxs = condense_layer_order[:condense_layer_num]
-
-print("trim layer idx {}".format(trim_layer_idxs))
+prune_layer_idxs = condense_layer_order[:prune_layer_num]
 print("condense layer idx {}".format(prune_layer_idxs))
-# print("layer idx map after trimming{}".format(layer_map_trim))
 
-# prune_layer_idxs = list(map(lambda x: layer_map_trim[x], prune_layer_idxs))
-# print("condense layer idx after mapping {}".format(prune_layer_idxs))
-
-# 层索引 to 专家索引序列
-# current_dir = "/root/autodl-tmp/deepseek-ai/deepseek-moe-16b-base"
-current_dir = '/mnt/fast/nobackup/users/ly0008/caomingyu/transformers/deepseek_model'
+# greedy search expert result
+current_dir = os.path.dirname(os.path.abspath(__file__))
 expert_order_path = os.path.join(
     current_dir, "layer_idx_to_expert_idx.greedy_jl.json")
 layer_idx_to_expert_idxs = json.load(open(expert_order_path, 'r'))
 layer_idx_to_expert_idxs = {
     int(key): value for key, value in layer_idx_to_expert_idxs.items()}
 
-# 专家的动态权重
+# pre-computed expert weight
 dynamic_weights = {}
 dynamic_weights_path = os.path.join(current_dir, "dynamic_weight.json")
 dynamic_weight_tmp = json.load(open(dynamic_weights_path, 'r'))
@@ -720,7 +687,8 @@ class DeepseekAttention(nn.Module):
         if past_key_value is not None:
             # print(self.layer_idx)
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
-            cache_idx = layer_map_trim[self.layer_idx-1] + 1 if self.layer_idx > 0 else 0
+            cache_idx = layer_map_trim[self.layer_idx -
+                                       1] + 1 if self.layer_idx > 0 else 0
             key_states, value_states = past_key_value.update(
                 key_states, value_states, cache_idx, cache_kwargs)
 
@@ -1109,7 +1077,6 @@ class DeepseekDecoderLayer(nn.Module):
             config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = DeepseekRMSNorm(
             config.hidden_size, eps=config.rms_norm_eps)
-        
 
     def forward(
         self,
@@ -1424,9 +1391,9 @@ class DeepseekModel(DeepseekPreTrainedModel):
                 if relative_layer in self.trim_layer_idxs:
                     # print("layer_num {} current_layer {}, BLOCK_TRIM layer".format(
                     #     self.layer_num, relative_layer))
-                    global_layer +=1
+                    global_layer += 1
                     continue
-                
+
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
 
