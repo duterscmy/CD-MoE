@@ -80,4 +80,21 @@ For some intermediate variables, we provide some already generated results. The 
 
 ## Evaluation
 
-TODO
+Install [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)  
+Evaluate the pruned model:
+```bash
+lm_eval --model hf \
+    --model_args $modelpath \
+    --tasks arc-challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
+    --device cuda:0 \
+    --batch_size 8
+```
+Evaluate the fine-tuned model:
+```bash
+lm_eval --model hf \
+    --model_args $modelpath \
+    --tasks arc-challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
+    --device cuda:0 \
+    --batch_size 8 \
+    --ignore_mismatched_sizes
+```

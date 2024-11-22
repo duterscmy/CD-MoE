@@ -32,7 +32,7 @@ parser.add_argument("--input", default="datasets/c4-train.00000-of-01024.1w.json
                     help="finetune data")
 parser.add_argument("--c4-input", default="datasets/c4-train.00000-of-01024.1w.json",
                     help="finetune data")
-parser.add_argument("--input-name", default="",
+parser.add_argument("--input-name", default="c4",
                     help="finetune data name")
 parser.add_argument("--model", default="./deepseek",
                     help="预训练模型路径")
@@ -46,7 +46,7 @@ parser.add_argument("--num-layer", type=int, default=27,
                     help="默认为qw16B层数")  # deepseek 27 qw24
 parser.add_argument("--num-expert", type=int, default=64, help="默认为qw16B专家数")
 
-parser.add_argument("--score-mode", type=str, default="l1", help="层间对专家排序的指标")
+parser.add_argument("--score-mode", type=str, default="greedy_jl", help="层间对专家排序的指标")
 parser.add_argument("--prune-num-expert", default=6, type=int,
                     help="剪枝后剩余的expert数量")
 parser.add_argument("--prune-num-layer", default=9, type=int,
