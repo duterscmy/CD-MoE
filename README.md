@@ -26,8 +26,6 @@ Installation instructions can be found in [INSTALL.md](./INSTALL.md).
 
 ## Setup
 
-Follow the setup of [Transformers](https://github.com/huggingface/transformers)
-
 ```bash
 git clone https://github.com/duterscmy/CD-MoE.git
 cd CD-MoE
@@ -112,6 +110,9 @@ lm_eval --model hf \
     --batch_size 8 \
     --ignore_mismatched_sizes
 ```
+
+## Acknowledgement
+This repository is build upon the [Transformers](https://github.com/huggingface/transformers) repositories.
 
 ## Citation
 if you find this repo is helpful, please cite
