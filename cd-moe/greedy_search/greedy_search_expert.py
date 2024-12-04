@@ -9,7 +9,7 @@ from typing import List, Optional
 import random
 import os
 import json
-# import shortuuid
+import collections
 import time
 
 from transformers.variables import *
@@ -32,6 +32,7 @@ def calculate_kl_divergence(probs_p, probs_q):
     kl_div = F.kl_div(probs_q.log(), probs_p, reduction='batchmean')  # 计算KL散度
     return kl_div
 
+
 def calculate_js_divergence(logits_p, logits_q):
     """
     计算两个分布之间的Jensen-Shannon散度
@@ -48,6 +49,7 @@ def calculate_js_divergence(logits_p, logits_q):
     js_div = 0.5 * (kl_pm + kl_qm)
     print("kl per sample {} {} {}".format(kl_pm, kl_qm, js_div))
     return js_div
+
 
 def get_layer_output(model, moe_layer_idx, tokenizer, input_strs, batch_size=1, add_special_tokens=True):
     model = model.eval()
@@ -85,12 +87,14 @@ def get_layer_output(model, moe_layer_idx, tokenizer, input_strs, batch_size=1, 
             # Remove padding based on attention mask
             for j in range(len(text_list_batch)):
                 # print(layer_output[j].size())
-                length = attention_mask[j].sum().item()  # the valid length of the input
+                # the valid length of the input
+                length = attention_mask[j].sum().item()
                 trimmed_output = layer_output[j, -length:, :]  # 左侧padding
                 # print("trimmed output {}".format(trimmed_output))
                 # print("trimeed output dtype {}".format(trimmed_output.dtype))
                 layer_outputs.append(trimmed_output)
     return layer_outputs
+
 
 def get_total_js_divergence(origin_layer_outputs, prune_layer_outputs):
     js_div_sum = 0.0
@@ -101,6 +105,7 @@ def get_total_js_divergence(origin_layer_outputs, prune_layer_outputs):
     print("sum div {}, length dataset {}, mean div {}".format(
         js_div_sum, len(origin_layer_outputs), mean_js_div))
     return mean_js_div
+
 
 global_start_time = time.time()
 parser = argparse.ArgumentParser()
@@ -114,12 +119,11 @@ parser.add_argument("--model", default="./deepseek",
                     help="模型路径")
 parser.add_argument("--batch-size", type=int, default=8, help="并行解码的样本数量")
 parser.add_argument("--num-layer", type=int, default=27,
-                    help="默认为qw16B层数")  # deepseek 27 qw24
-
-parser.add_argument("--num-expert", type=int, default=64, help="默认为qw16B专家数")
-parser.add_argument("--prune-layer", default=0, type=int,
-                    help="选定一层进行剪枝")
-parser.add_argument("--load-in-8bit", action="store_true", help="load in 8 bit")
+                    help="默认为deepseek16B层数")  # deepseek 27 qw24
+parser.add_argument("--num-expert", type=int,
+                    default=64, help="默认为deepseek专家数")
+parser.add_argument("--num-route-expert", type=int,
+                    default=6, help="默认为deepseek路由专家数")
 
 args = parser.parse_args()
 
@@ -189,6 +193,7 @@ print("calibration data size: {}".format(len(raw_questions)))
 batch_size = args.batch_size
 num_layer = args.num_layer
 num_expert = args.num_expert
+num_route_expert = args.num_route_expert
 output_path = args.output
 
 # load dynamic weights
@@ -202,24 +207,18 @@ for key, value in dynamic_weight_tmp.items():
 # print(dynamic_weights)
 
 
-# origin output (no prune)
-prune_layer_idx = int(args.prune_layer)  # 每次只剪枝一层，逐层看效果
-prune_layer_list.append({})
-layer_num_list.append(num_layer)
-import time
-s = time.time()
-origin_get_layer_output = get_layer_output(model, prune_layer_idx, tokenizer, raw_questions, batch_size=batch_size)
-e = time.time()
-print("compute origin layer output cost {}".format(e-s))
+# greedy search
+layer_to_expert_idxs = {}
+for prune_layer_idx in num_layer:
+    # origin output (no prune)
+    prune_layer_idx = int(args.prune_layer)  # 每次只剪枝一层，逐层看效果
+    prune_layer_list.append({})
+    layer_num_list.append(num_layer)
+    origin_get_layer_output = get_layer_output(
+        model, prune_layer_idx, tokenizer, raw_questions, batch_size=batch_size)
 
-# prune
-
-prune_expert_idx_list = []  # greedy search expert list
-output_dict = {"expert_idxs": [],
-               "mean_jl": [],
-               "expert_num": []}
-try:
-    while (len(prune_expert_idx_list) < 6):  # extra expert num = 6
+    prune_expert_idx_list = []  # greedy search expert list
+    while (len(prune_expert_idx_list) < num_route_expert):  # extra expert num = 6
         print("the {}th iteration".format(len(prune_expert_idx_list)))
         candidate_expert_idx_list = [expert for expert in range(64)
                                      if expert not in prune_expert_idx_list]
@@ -236,7 +235,8 @@ try:
             print("try to eval expert idx list {}".format(
                 tmp_prune_expert_idx_list))
 
-            prune_layer_idx_to_expert_idxs = {prune_layer_idx: tmp_prune_expert_idx_list}
+            prune_layer_idx_to_expert_idxs = {
+                prune_layer_idx: tmp_prune_expert_idx_list}
             print("prune layer idx to expert idxs {}".format(
                 prune_layer_idx_to_expert_idxs))
             # update prune variables
@@ -244,11 +244,10 @@ try:
             layer_num_list.append(num_layer)
 
             # eval ppl on benchmark
-            prune_get_layer_output = get_layer_output(model, prune_layer_idx, tokenizer, raw_questions, batch_size=batch_size)
-            mean_jl = get_total_js_divergence(origin_get_layer_output, prune_get_layer_output)
-            output_dict["mean_jl"].append(mean_jl)
-            output_dict["expert_idxs"].append(tmp_prune_expert_idx_list)
-            output_dict["expert_num"].append(len(tmp_prune_expert_idx_list))
+            prune_get_layer_output = get_layer_output(
+                model, prune_layer_idx, tokenizer, raw_questions, batch_size=batch_size)
+            mean_jl = get_total_js_divergence(
+                origin_get_layer_output, prune_get_layer_output)
 
             if mean_jl < optimal_jl:
                 optimal_jl = mean_jl
@@ -258,20 +257,15 @@ try:
             print("jl {}, best_jl {}, eval jl cost {} seconds\n".format(
                 mean_jl, optimal_jl, end_time-start_time))
 
-        prune_expert_idx_list = prune_expert_idx_list + [optimal_candidate_idx]
+        prune_expert_idx_list = prune_expert_idx_list + \
+            [optimal_candidate_idx]
 
-        output_dict["mean_jl"].append(optimal_jl)
-        output_dict["expert_idxs"].append(prune_expert_idx_list)
-        output_dict["expert_num"].append(len(prune_expert_idx_list))
+        layer_to_expert_idxs[prune_layer_idx] = prune_expert_idx_list
 
-    print(output_dict)
-    output_df = pd.DataFrame(output_dict)
-    output_file = os.path.join(output_path, "greedy_search_expert_jl_layer{}.xlsx".format(prune_layer_idx))
-    output_df.to_excel(output_file)
-except Exception as e:
-    import traceback
-    msg = traceback.format_exc()
-    print("error: {}, {}".format(e, msg))
 
-end_time  = time.time()
-print("greedy search expert batchsize {} for one layer cost: {} seconds".format(batch_size, end_time-global_start_time))
+output_file = os.path.join(
+    output_path, "greedy_search_expert_jl.json")
+json.dump(layer_to_expert_idxs, open(output_file, 'w'))
+end_time = time.time()
+print("greedy search expert batchsize {} for one layer cost: {} seconds".format(
+    batch_size, end_time-global_start_time))

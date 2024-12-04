@@ -106,6 +106,7 @@ def get_total_js_divergence(origin_layer_outputs, prune_layer_outputs):
         js_div_sum, len(origin_layer_outputs), mean_js_div), flush=True)
     return mean_js_div
 
+
 global_start_time = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("--input", default="./datasets/sample_eval.json",
@@ -120,10 +121,11 @@ parser.add_argument("--greedy-expert-file",  default="./",
                     help="逐层贪心搜索的专家")
 parser.add_argument("--batch-size", type=int, default=8, help="并行解码的样本数量")
 parser.add_argument("--num-layer", type=int, default=27,
-                    help="默认为qw16B层数")  # deepseek 27 qw24
-parser.add_argument("--num-expert", type=int, default=64, help="默认为qw16B专家数")
+                    help="默认为deepseek16B层数")  # deepseek 27 qw24
+parser.add_argument("--num-expert", type=int,
+                    default=64, help="默认为deepseek16B专家数")
 
-parser.add_argument("--prune-layer", default=0, type=int,
+parser.add_argument("--prune-layer", default=15, type=int,
                     help="剪枝层的数量")
 parser.add_argument("--prune-expert", default=6, type=int,
                     help="剪枝专家的数量")
@@ -138,6 +140,7 @@ batch_size = args.batch_size
 num_layer = args.num_layer
 num_expert = args.num_expert
 num_prune_expert = args.prune_expert
+num_prune_layer = args.prune_layer
 prune_expert_strategy = args.prune_expert_strategy
 pytorch_checkpoint_path = args.model
 dynamic_weight_file = args.dynamic_weight_file
@@ -232,14 +235,14 @@ prune_layer_list.append({})
 layer_num_list.append(num_layer)
 s = time.time()
 origin_get_layer_output = get_layer_output(
-    model, 26, tokenizer, raw_questions, batch_size=batch_size)
+    model, num_layer-1, tokenizer, raw_questions, batch_size=batch_size)
 e = time.time()
 print("compute origin layer output cost {}".format(e-s))
 
 # prune
 
 beam_size = 1
-max_greedy_layer_num = 26
+max_greedy_layer_num = num_prune_layer
 beam_prune_layer_idx_list = [[]]
 output_dict = {"layer_idxs": [],
                "mean_jl": [],
@@ -303,5 +306,6 @@ except Exception as e:
     print("error: {}, {}".format(e, msg), flush=True)
 
 
-end_time  = time.time()
-print("greedy search layer batchsize {} for one layer cost: {} seconds".format(batch_size, end_time-global_start_time))
+end_time = time.time()
+print("greedy search layer batchsize {} for one layer cost: {} seconds".format(
+    batch_size, end_time-global_start_time))
