@@ -209,20 +209,18 @@ for key, value in dynamic_weight_tmp.items():
 
 # greedy search
 layer_to_expert_idxs = {}
-for prune_layer_idx in num_layer:
+for prune_layer_idx in range(num_layer):
     # origin output (no prune)
-    prune_layer_idx = int(args.prune_layer)  # 每次只剪枝一层，逐层看效果
     prune_layer_list.append({})
     layer_num_list.append(num_layer)
     origin_get_layer_output = get_layer_output(
         model, prune_layer_idx, tokenizer, raw_questions, batch_size=batch_size)
 
     prune_expert_idx_list = []  # greedy search expert list
-    while (len(prune_expert_idx_list) < num_route_expert):  # extra expert num = 6
+    while (len(prune_expert_idx_list) < num_route_expert):
         print("the {}th iteration".format(len(prune_expert_idx_list)))
         candidate_expert_idx_list = [expert for expert in range(64)
                                      if expert not in prune_expert_idx_list]
-        # candidate_layer_idx_list = candidate_layer_idx_list[:beam_size]
         print("exist prune experts {}; candidate prune experts {}".format(
             prune_expert_idx_list, candidate_expert_idx_list))
 
@@ -263,9 +261,7 @@ for prune_layer_idx in num_layer:
         layer_to_expert_idxs[prune_layer_idx] = prune_expert_idx_list
 
 
-output_file = os.path.join(
-    output_path, "greedy_search_expert_jl.json")
-json.dump(layer_to_expert_idxs, open(output_file, 'w'))
+json.dump(layer_to_expert_idxs, open(output_path, 'w'))
 end_time = time.time()
 print("greedy search expert batchsize {} for one layer cost: {} seconds".format(
     batch_size, end_time-global_start_time))
