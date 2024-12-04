@@ -11,14 +11,29 @@ Official PyTorch implementation of CD-MOE, as presented in our paper: CONDENSE, 
 Mixture-of-Experts (MoE)  has garnered significant attention for their ability to scale up neural networks while utilizing the same or even fewer active parameters. However, MoE does not relieve the massive memory requirements of networks, which limits their practicality in real-world applications, especially in the era of large language models (LLMs). While recent work explores the possibility of removing entire layers of MoE to reduce memory, the performance degradation is still notable. In this paper, we propose Condense-MoE (CD-MoE) that, instead of dropping the entire MoE layer, condenses the big, sparse MoE layer into a small but dense layer with only a few experts that are activated for all tokens. Our approach is specifically designed for fine-grained MoE with shared experts, where Feed-Forward Networks are split into many small experts, with certain experts isolated to serve as shared experts that are always activated. We demonstrate the effectiveness of our method across multiple MoE models such as DeepSeekMoE and QwenMoE on various benchmarks. Specifically, for the DeepSeekMoE-16B model, our approach maintains nearly 90% of the average accuracy while reducing memory usage by 30%  and enhancing inference speed by 30%. Moreover, we show that with lightweight expert fine-tuning, the pruned model can achieve further improvements on specific tasks. 
 
 ## Results
-![main result1](./images/figure2.png)
-CD-MoE against baselines on DeepSeekMOE-16B. Left: Average accuracy with varying SpeedUp against the dense model. Right: Average accuracy with varying Memory Ratio against the dense model. The Gray dotted line is the dense model result. E(2+0) represents 2 shared experts and no routing experts, and E(2+6) represents 2 shared with 6 routing experts.
+<p align="center">
+    <img src="./images/figure2.png" alt="main result1" width="520"/>
+</p>
 
-![main result2](./images/figure5.png)
-CD-MoE against baselines on Qwen1.5-MoE-2.7B. Left: Average accuracy with varying SpeedUp against the dense model. Right: Average accuracy with varying Memory Ratio against the dense model. The Gray dotted line is the dense model result. E(4+0) represents 4 shared experts with 4 routing experts, and E(4+4) represents 4 shared experts with 4 routing experts.
+<p align="left">
+    CD-MoE against baselines on DeepSeekMOE-16B. Left: Average accuracy with varying SpeedUp against the dense model. Right: Average accuracy with varying Memory Ratio against the dense model. The Gray dotted line is the dense model result. E(2+0) represents 2 shared experts and no routing experts, and E(2+6) represents 2 shared with 6 routing experts.
+</p>
 
-![main result3](./images/figure3.png)
-CD-MoE on finetuning. Left: Average accuracy with varying SpeedUp. Right: Average accuracy with varying Memory Ratio. The Gray dotted line is the dense model result. CD-MoE and LM+SFT represent condensed and supervision fine-tuned models, respectively. E(2+0) represents 2 shared experts and no routing experts, and E(2+6) represents 2 shared with 6 routing experts.
+<p align="center">
+    <img src="./images/figure5.png" alt="main result2" width="520"/>
+</p>
+
+<p align="left">
+    CD-MoE against baselines on Qwen1.5-MoE-2.7B. Left: Average accuracy with varying SpeedUp against the dense model. Right: Average accuracy with varying Memory Ratio against the dense model. The Gray dotted line is the dense model result. E(4+0) represents 4 shared experts with 4 routing experts, and E(4+4) represents 4 shared experts with 4 routing experts.
+</p>
+
+
+
+
+
+
+<!-- ![main result3](./images/figure3.png)
+CD-MoE on finetuning. Left: Average accuracy with varying SpeedUp. Right: Average accuracy with varying Memory Ratio. The Gray dotted line is the dense model result. CD-MoE and LM+SFT represent condensed and supervision fine-tuned models, respectively. E(2+0) represents 2 shared experts and no routing experts, and E(2+6) represents 2 shared with 6 routing experts. -->
 
 ## Installation
 
@@ -117,10 +132,13 @@ This repository is build upon the [Transformers](https://github.com/huggingface/
 ## Citation
 if you find this repo is helpful, please cite
 ```bibtex
-@article{sun2023wanda,
-  title={A Simple and Effective Pruning Approach for Large Language Models}, 
-  author={Sun, Mingjie and Liu, Zhuang and Bair, Anna and Kolter, J. Zico},
-  year={2023},
-  journal={arXiv preprint arXiv:2306.11695}
+@misc{cao2024condensedontjustprune,
+      title={Condense, Don't Just Prune: Enhancing Efficiency and Performance in MoE Layer Pruning}, 
+      author={Mingyu Cao and Gen Li and Jie Ji and Jiaqi Zhang and Xiaolong Ma and Shiwei Liu and Lu Yin},
+      year={2024},
+      eprint={2412.00069},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2412.00069}, 
 }
 ```
