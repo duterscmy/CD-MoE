@@ -53,7 +53,7 @@ from transformers.utils import (
 )
 from transformers.utils.import_utils import is_torch_fx_available
 from .configuration_deepseek import DeepseekConfig
-from .exp_hyper import num_route_experts, prune_layer_num
+# from .exp_hyper import num_route_experts, prune_layer_num
 
 
 # if is_flash_attn_2_available():
@@ -391,25 +391,21 @@ class AddAuxiliaryLoss(torch.autograd.Function):
                 1, dtype=ctx.dtype, device=grad_output.device)
         return grad_output, grad_loss
 
-
 # hyper parameters
 layer_num = 27
-# num_route_experts = 0
-# prune_layer_num = 9
+num_route_experts = 0
+prune_layer_num = 9
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # greedy search layer result
-if num_route_experts == 6:
-    condense_layer_order = [19, 15, 22, 10, 12, 6, 14, 21,
-                            26, 7, 17, 1, 24, 23, 9]  # js greedy search order
-elif num_route_experts == 0:
-    condense_layer_order = [19, 12, 7, 23, 10, 14,
-                            1, 24, 17, 15, 9, 21, 18, 6, 26]
-
+condense_layer_order_path = os.path.join(
+    current_dir, "layer_idx_order.e6.json")
+condense_layer_order = json.load(open(condense_layer_order_path, 'r'))
 prune_layer_idxs = condense_layer_order[:prune_layer_num]
 print("condense layer idx {}".format(prune_layer_idxs))
 
 # greedy search expert result
-current_dir = os.path.dirname(os.path.abspath(__file__))
 expert_order_path = os.path.join(
     current_dir, "layer_idx_to_expert_idx.greedy_jl.json")
 layer_idx_to_expert_idxs = json.load(open(expert_order_path, 'r'))
@@ -687,8 +683,7 @@ class DeepseekAttention(nn.Module):
         if past_key_value is not None:
             # print(self.layer_idx)
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
-            cache_idx = layer_map_trim[self.layer_idx -
-                                       1] + 1 if self.layer_idx > 0 else 0
+            cache_idx = self.layer_idx
             key_states, value_states = past_key_value.update(
                 key_states, value_states, cache_idx, cache_kwargs)
 
@@ -1077,6 +1072,7 @@ class DeepseekDecoderLayer(nn.Module):
             config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = DeepseekRMSNorm(
             config.hidden_size, eps=config.rms_norm_eps)
+        
 
     def forward(
         self,
@@ -1283,11 +1279,10 @@ class DeepseekModel(DeepseekPreTrainedModel):
         self.gradient_checkpointing = False
         # Initialize weights and apply final processing
 
-        global layer_num, trim_layer_idxs
+        global layer_num, prune_layer_idxs
         self.layer_num = layer_num
-        self.trim_layer_idxs = trim_layer_idxs
+        self.prune_layer_idxs = prune_layer_idxs
 
-        # self.trim_layer_idxs = [i+1 for i in trim_layer_idxs]  # add first ffn layer
 
         self.post_init()
 
@@ -1388,12 +1383,12 @@ class DeepseekModel(DeepseekPreTrainedModel):
             if tmp_layer_idx > 0:
                 global global_layer
                 relative_layer = global_layer % self.layer_num
-                if relative_layer in self.trim_layer_idxs:
+                if relative_layer in self.prune_layer_idxs:
                     # print("layer_num {} current_layer {}, BLOCK_TRIM layer".format(
                     #     self.layer_num, relative_layer))
-                    global_layer += 1
+                    global_layer +=1
                     continue
-
+                
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
 

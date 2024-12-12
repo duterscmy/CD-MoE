@@ -109,17 +109,17 @@ def get_total_js_divergence(origin_layer_outputs, prune_layer_outputs):
 
 global_start_time = time.time()
 parser = argparse.ArgumentParser()
-parser.add_argument("--input", default="./datasets/sample_eval.json",
+parser.add_argument("--input", default="./data/calibration_data.json",
                     help="eval数据集路径")
-parser.add_argument("--output", default="./",
+parser.add_argument("--output", default="./data/layer_idx_to_expert_idx.greedy_jl.json",
                     help="result path")
-parser.add_argument("--dynamic-weight-file", default="./",
-                    help="result path")
+parser.add_argument("--dynamic-weight-file", default="./data/dynamic_weight.json",
+                    help="动态路由系数")
 parser.add_argument("--model", default="./deepseek",
                     help="模型路径")
 parser.add_argument("--batch-size", type=int, default=8, help="并行解码的样本数量")
 parser.add_argument("--num-layer", type=int, default=27,
-                    help="默认为deepseek16B层数")  # deepseek 27 qw24
+                    help="默认为deepseek16B层数")
 parser.add_argument("--num-expert", type=int,
                     default=64, help="默认为deepseek专家数")
 parser.add_argument("--num-route-expert", type=int,
@@ -196,7 +196,7 @@ num_expert = args.num_expert
 num_route_expert = args.num_route_expert
 output_path = args.output
 
-# load dynamic weights
+# load pre-computed expert weights
 dynamic_weight_tmp = json.load(open(args.dynamic_weight_file))
 for key, value in dynamic_weight_tmp.items():
     key = key.split("-")

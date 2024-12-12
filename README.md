@@ -90,11 +90,14 @@ python cd-moe/greedy_search/greedy_search_layer.py \
 ### 3. Fine-tune (Optional)
 
 ```bash
-cp cd-moe/modeling_deepseek.py cd-moe/exp_hyper.py $model_path
+cp cd-moe/modeling_deepseek.py $model_path
 python cd-moe/finetune/finetune.py \
     --input $sft_data \
     --c4-input $lm_data \
     --model $model_path \
+    --dynamic-weight-file $expert_weight_file \
+    --greedy-expert-file $greedy_search_expert_result_file \
+    --greedy-expert-file $greedy_search_layer_result_file \
     --output-dir $sft_model_path
 ```
 
@@ -104,14 +107,16 @@ For some intermediate variables, we provide some already generated results. The 
 - calibration_data_file: `cd-moe/data/calibration_data.json`
 - expert_weight_file: `cd-moe/data/dynamic_weight.json`
 - greedy_search_expert_result_file: `cd-moe/data/layer_idx_to_expert_idx.greedy_jl.json`
+- greedy_search_layer_result_file: `cd-moe/data/layer_idx_order.e6.json` and `cd-moe/data/layer_idx_order.e0.json`
 
 ## Evaluation
 
 Install [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)  
 Evaluate the pruned model:
 ```bash
+cp $expert_weight_file $greedy_search_expert_result_file $greedy_search_layer_result_file cd-moe/modeling_deepseek.py $model_path
 lm_eval --model hf \
-    --model_args $modelpath \
+    --model_args $model_path \
     --tasks arc-challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
     --device cuda:0 \
     --batch_size 8
@@ -119,12 +124,13 @@ lm_eval --model hf \
 Evaluate the fine-tuned model:
 ```bash
 lm_eval --model hf \
-    --model_args $modelpath \
+    --model_args $sft_model_path \
     --tasks arc-challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
     --device cuda:0 \
     --batch_size 8 \
     --ignore_mismatched_sizes
 ```
+`--ignore_mismatched_sizes` option is necessary because, during fine-tuning, to save GPU memory, the unnecessary expert parameters in the model are set to empty, causing a mismatch between the parameter sizes saved in the model file and the default parameter sizes in the model config.
 
 ## Acknowledgement
 This repository is build upon the [Transformers](https://github.com/huggingface/transformers) repositories.

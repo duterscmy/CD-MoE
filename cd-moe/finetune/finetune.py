@@ -20,7 +20,7 @@ import os
 import json
 import time
 
-from transformers.models.qwen2_moe.expert_idx import *
+from transformers.variables import *
 from utils import print_trainable_parameters, \
     classify_shared_experts, \
     classify_remained_experts, \
@@ -36,7 +36,13 @@ parser.add_argument("--input-name", default="c4",
                     help="finetune data name")
 parser.add_argument("--model", default="./deepseek",
                     help="预训练模型路径")
-parser.add_argument("--output-dir", default="/root/autodl-tmp/deepseek-ai",
+parser.add_argument("--dynamic-weight-file", default="./data/dynamic_weight.json",
+                    help="动态路由系数")
+parser.add_argument("--greedy-expert-file",  default="./data/layer_idx_to_expert_idx.greedy_jl.json",
+                    help="逐层贪心搜索的专家")
+parser.add_argument("--greedy-layer-file",  default="./data/layer_idx_order.e6.json",
+                    help="逐层贪心搜索的专家")
+parser.add_argument("--output-dir", default="./deepseek",
                     help="保存模型的路径")
 
 parser.add_argument("--batch-size", type=int, default=8, help="并行解码的样本数量")
@@ -59,6 +65,11 @@ parser.add_argument("--finetune-route-weight", action="store_true",
 args = parser.parse_args()
 
 pytorch_checkpoint_path = args.model
+greedy_expert_file = args.greedy_expert_file
+greedy_layer_file = args.greedy_layer_file
+dynamic_weight_file = args.dynamic_weight_file
+output_dir = args.output_dir
+
 batch_size = args.batch_size
 max_length = args.max_length
 max_lr = args.lr
@@ -67,7 +78,6 @@ num_layer = args.num_layer
 num_expert = args.num_expert
 prune_num_expert = args.prune_num_expert
 prune_num_layer = args.prune_num_layer
-output_dir = args.output_dir
 no_c4 = args.no_c4
 
 
@@ -115,23 +125,23 @@ model = AutoModelForCausalLM.from_pretrained(
     trust_remote_code=True,
     ignore_mismatched_sizes=True,
 )
-print(model)
 tokenizer = AutoTokenizer.from_pretrained(pytorch_checkpoint_path)
 
 
-# prune layer idx and expert idx
-layer_idx_to_expert_idxs = json.load(
-            open("/mnt/fast/nobackup/users/ly0008/caomingyu/transformers/deepseek_model/layer_idx_to_expert_idx.greedy_jl.json", 'r'))
-layer_idx_to_expert_idxs = {
-    int(key): value for key, value in layer_idx_to_expert_idxs.items()}
-if prune_num_expert == 6:
-    layer_idx_list_ppl_order = [19, 15, 22, 10,
-                                        12, 6, 14, 21, 26, 7, 17, 1, 24, 23, 9]
+# load greedy expert result
+if prune_num_expert == 0:
+    layer_idx_to_expert_idxs = {idx: [] for idx in range(27)}
 else:
-    layer_idx_list_ppl_order = [19, 12, 7, 23, 10, 14,
-                                    1, 24, 17, 15, 9, 21, 18, 6, 26]
+    layer_idx_to_expert_idxs = json.load(open(greedy_expert_file, 'r'))
+    layer_idx_to_expert_idxs = {
+        int(key): value for key, value in layer_idx_to_expert_idxs.items()}
+
+# load greedy layer result 
+layer_idx_list_ppl_order = json.load(open(greedy_layer_file, 'r'))
+
+# load pre-computed expert weights
 dynamic_weights = {}
-dynamic_weight_tmp = json.load(open("/mnt/fast/nobackup/users/ly0008/caomingyu/transformers/deepseek_model/dynamic_weight.json"))
+dynamic_weight_tmp = json.load(open(dynamic_weight_file))
 for key, value in dynamic_weight_tmp.items():
     key = key.split("-")
     layer_idx = int(key[0])

@@ -109,19 +109,19 @@ def get_total_js_divergence(origin_layer_outputs, prune_layer_outputs):
 
 global_start_time = time.time()
 parser = argparse.ArgumentParser()
-parser.add_argument("--input", default="./datasets/sample_eval.json",
+parser.add_argument("--input", default="./data/calibration_data.json",
                     help="eval数据集路径")
 parser.add_argument("--model", default="./deepseek",
                     help="模型路径")
-parser.add_argument("--dynamic-weight-file", default="./",
+parser.add_argument("--dynamic-weight-file", default="./data/dynamic_weight.json",
                     help="动态路由系数")
-parser.add_argument("--output", default="./",
+parser.add_argument("--output", default="./data/layer_idx_order.json",
                     help="输出结果的文件名")
-parser.add_argument("--greedy-expert-file",  default="./",
+parser.add_argument("--greedy-expert-file",  default="./data/layer_idx_to_expert_idx.greedy_jl.json",
                     help="逐层贪心搜索的专家")
 parser.add_argument("--batch-size", type=int, default=8, help="并行解码的样本数量")
 parser.add_argument("--num-layer", type=int, default=27,
-                    help="默认为deepseek16B层数")  # deepseek 27 qw24
+                    help="默认为deepseek16B层数")
 parser.add_argument("--num-expert", type=int,
                     default=64, help="默认为deepseek16B专家数")
 
@@ -192,14 +192,6 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(pytorch_checkpoint_path)
 
 # read benchmark
-# with open(args.input, 'r') as fp:
-#     questions = []
-#     for line in fp:
-#         line = line.strip()
-#         if line:
-#             question = json.loads(line)
-#             questions.append(question)
-# raw_questions = list(map(lambda x: x["turns"][0], questions))
 with open(args.input, 'r') as fp:
     questions = []
     for line in fp:
@@ -209,7 +201,7 @@ with open(args.input, 'r') as fp:
             questions.append(question)
 raw_questions = list(map(lambda x: x["text"], questions))
 
-# load dynamic weights
+# load greedy expert result
 if num_prune_expert == 0:
     layer_idx_to_expert_idxs = {idx: [] for idx in range(27)}
 else:
@@ -218,6 +210,7 @@ else:
     layer_idx_to_expert_idxs = {
         int(key): value[:num_prune_expert] for key, value in layer_idx_to_expert_idxs.items()}
 
+# load pre-computed expert weights
 dynamic_weight_file = args.dynamic_weight_file
 dynamic_weight_tmp = json.load(open(dynamic_weight_file, 'r'))
 for key, value in dynamic_weight_tmp.items():
@@ -240,71 +233,56 @@ e = time.time()
 print("compute origin layer output cost {}".format(e-s))
 
 # prune
-
 beam_size = 1
 max_greedy_layer_num = num_prune_layer
 beam_prune_layer_idx_list = [[]]
-output_dict = {"layer_idxs": [],
-               "mean_jl": [],
-               "layer_num": []}
-try:
-    while (len(beam_prune_layer_idx_list[0]) < max_greedy_layer_num):
-        print("the {}th iteration".format(
-            len(beam_prune_layer_idx_list[0])), flush=True)
-        new_prune_layer_idx_list_with_jl = []
 
-        for prune_layer_idx_list in beam_prune_layer_idx_list:
-            candidate_layer_idx_list = [layer for layer in range(27)
-                                        if layer not in prune_layer_idx_list]
-            # candidate_layer_idx_list = candidate_layer_idx_list[:beam_size]
-            print("exist prune layers {}; candidate prune layers {}".format(
-                prune_layer_idx_list, candidate_layer_idx_list), flush=True)
+while (len(beam_prune_layer_idx_list[0]) < max_greedy_layer_num):
+    print("the {}th iteration".format(
+        len(beam_prune_layer_idx_list[0])), flush=True)
+    new_prune_layer_idx_list_with_jl = []
 
-            for candidate_idx in candidate_layer_idx_list:  # greedy search expert
-                start_time = time.time()
-                tmp_layer_list = prune_layer_idx_list + [candidate_idx]
-                print("try to eval layer idx list {}".format(
-                    tmp_layer_list), flush=True)
+    for prune_layer_idx_list in beam_prune_layer_idx_list:
+        candidate_layer_idx_list = [layer for layer in range(num_layer)
+                                    if layer not in prune_layer_idx_list]
+        # candidate_layer_idx_list = candidate_layer_idx_list[:beam_size]
+        print("exist prune layers {}; candidate prune layers {}".format(
+            prune_layer_idx_list, candidate_layer_idx_list), flush=True)
 
-                prune_layer_idx_to_expert_idxs = {}
-                for layer_idx in tmp_layer_list:
-                    prune_layer_idx_to_expert_idxs[layer_idx] = layer_idx_to_expert_idxs[layer_idx]
-                print("exp prune layer idx to expert idxs {}".format(
-                    prune_layer_idx_to_expert_idxs), flush=True)
-                # update prune variables
-                prune_layer_list.append(prune_layer_idx_to_expert_idxs)
-                layer_num_list.append(num_layer)
+        for candidate_idx in candidate_layer_idx_list:  # greedy search expert
+            start_time = time.time()
+            tmp_layer_list = prune_layer_idx_list + [candidate_idx]
+            print("try to eval layer idx list {}".format(
+                tmp_layer_list), flush=True)
 
-                # eval ppl on benchmark
-                prune_get_layer_output = get_layer_output(
-                    model, 26, tokenizer, raw_questions, batch_size=batch_size)
-                mean_jl = get_total_js_divergence(
-                    origin_get_layer_output, prune_get_layer_output)
-                output_dict["mean_jl"].append(mean_jl)
-                output_dict["layer_idxs"].append(tmp_layer_list)
-                output_dict["layer_num"].append(len(tmp_layer_list))
+            prune_layer_idx_to_expert_idxs = {}
+            for layer_idx in tmp_layer_list:
+                prune_layer_idx_to_expert_idxs[layer_idx] = layer_idx_to_expert_idxs[layer_idx]
+            print("exp prune layer idx to expert idxs {}".format(
+                prune_layer_idx_to_expert_idxs), flush=True)
+            # update prune variables
+            prune_layer_list.append(prune_layer_idx_to_expert_idxs)
+            layer_num_list.append(num_layer)
 
-                new_prune_layer_idx_list_with_jl.append(
-                    (tuple(tmp_layer_list), mean_jl))
+            # eval ppl on benchmark
+            prune_get_layer_output = get_layer_output(
+                model, num_layer-1, tokenizer, raw_questions, batch_size=batch_size)
+            mean_jl = get_total_js_divergence(
+                origin_get_layer_output, prune_get_layer_output)
 
-        new_prune_layer_idx_list_with_jl = sorted(
-            new_prune_layer_idx_list_with_jl, key=lambda x: x[1])
-        new_prune_layer_idx_list_with_jl = new_prune_layer_idx_list_with_jl[:beam_size]
-        for prune_layer_idx_tuple, jl in new_prune_layer_idx_list_with_jl:
-            output_dict["mean_jl"].append(jl)
-            output_dict["layer_idxs"].append(prune_layer_idx_tuple)
-            output_dict["layer_num"].append(len(prune_layer_idx_tuple))
-        beam_prune_layer_idx_list = [
-            list(t) for t, j in new_prune_layer_idx_list_with_jl]
+            new_prune_layer_idx_list_with_jl.append(
+                (tuple(tmp_layer_list), mean_jl))
 
-    output_df = pd.DataFrame(output_dict)
-    output_df.to_excel(
-        "{}.xlsx".format(args.output))
-except Exception as e:
-    import traceback
-    msg = traceback.format_exc()
-    print("error: {}, {}".format(e, msg), flush=True)
+    new_prune_layer_idx_list_with_jl = sorted(
+        new_prune_layer_idx_list_with_jl, key=lambda x: x[1])
+    new_prune_layer_idx_list_with_jl = new_prune_layer_idx_list_with_jl[:beam_size]
 
+    beam_prune_layer_idx_list = [
+        list(t) for t, j in new_prune_layer_idx_list_with_jl]
+
+
+best_prune_layer_idx_list = beam_prune_layer_idx_list[0]
+json.dump(best_prune_layer_idx_list, open(output, 'w'))
 
 end_time = time.time()
 print("greedy search layer batchsize {} for one layer cost: {} seconds".format(
