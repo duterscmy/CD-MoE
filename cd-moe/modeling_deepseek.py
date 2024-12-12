@@ -53,7 +53,7 @@ from transformers.utils import (
 )
 from transformers.utils.import_utils import is_torch_fx_available
 from .configuration_deepseek import DeepseekConfig
-# from .exp_hyper import num_route_experts, prune_layer_num
+from .exp_hyper import *
 
 
 # if is_flash_attn_2_available():
@@ -391,16 +391,18 @@ class AddAuxiliaryLoss(torch.autograd.Function):
                 1, dtype=ctx.dtype, device=grad_output.device)
         return grad_output, grad_loss
 
-# hyper parameters
-layer_num = 27
-num_route_experts = 0
-prune_layer_num = 9
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
+layer_num = 27
+# import from exp_hyper.py
+# num_route_experts = 6
+# prune_layer_num = 15
+
+current_dir = "/home/work/mt_cmy/programs/CD-MoE/cd-moe/data"  # change to your repo dir
 
 # greedy search layer result
+layer_result_file = "layer_idx_order.e6.json" if num_route_experts == 6 else "layer_idx_order.e0.json"
 condense_layer_order_path = os.path.join(
-    current_dir, "layer_idx_order.e6.json")
+    current_dir, layer_result_file)
 condense_layer_order = json.load(open(condense_layer_order_path, 'r'))
 prune_layer_idxs = condense_layer_order[:prune_layer_num]
 print("condense layer idx {}".format(prune_layer_idxs))
@@ -683,9 +685,8 @@ class DeepseekAttention(nn.Module):
         if past_key_value is not None:
             # print(self.layer_idx)
             cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
-            cache_idx = self.layer_idx
             key_states, value_states = past_key_value.update(
-                key_states, value_states, cache_idx, cache_kwargs)
+                key_states, value_states, self.layer_idx, cache_kwargs)
 
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
@@ -1278,12 +1279,6 @@ class DeepseekModel(DeepseekPreTrainedModel):
 
         self.gradient_checkpointing = False
         # Initialize weights and apply final processing
-
-        global layer_num, prune_layer_idxs
-        self.layer_num = layer_num
-        self.prune_layer_idxs = prune_layer_idxs
-
-
         self.post_init()
 
     def get_input_embeddings(self):
@@ -1380,15 +1375,6 @@ class DeepseekModel(DeepseekPreTrainedModel):
         next_decoder_cache = None
 
         for tmp_layer_idx, decoder_layer in enumerate(self.layers):
-            if tmp_layer_idx > 0:
-                global global_layer
-                relative_layer = global_layer % self.layer_num
-                if relative_layer in self.prune_layer_idxs:
-                    # print("layer_num {} current_layer {}, BLOCK_TRIM layer".format(
-                    #     self.layer_num, relative_layer))
-                    global_layer +=1
-                    continue
-                
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)
 

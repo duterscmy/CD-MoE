@@ -125,9 +125,9 @@ parser.add_argument("--num-layer", type=int, default=27,
 parser.add_argument("--num-expert", type=int,
                     default=64, help="默认为deepseek16B专家数")
 
-parser.add_argument("--prune-layer", default=15, type=int,
+parser.add_argument("--prune-num-layer", default=15, type=int,
                     help="剪枝层的数量")
-parser.add_argument("--prune-expert", default=6, type=int,
+parser.add_argument("--prune-num-expert", default=6, type=int,
                     help="剪枝专家的数量")
 parser.add_argument("--prune-expert-strategy", default="greedy_jl", type=str,
                     help="剪枝专家的策略")

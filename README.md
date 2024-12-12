@@ -35,9 +35,6 @@ Mixture-of-Experts (MoE)  has garnered significant attention for their ability t
 <!-- ![main result3](./images/figure3.png)
 CD-MoE on finetuning. Left: Average accuracy with varying SpeedUp. Right: Average accuracy with varying Memory Ratio. The Gray dotted line is the dense model result. CD-MoE and LM+SFT represent condensed and supervision fine-tuned models, respectively. E(2+0) represents 2 shared experts and no routing experts, and E(2+6) represents 2 shared with 6 routing experts. -->
 
-## Installation
-
-Installation instructions can be found in [INSTALL.md](./INSTALL.md).
 
 ## Setup
 
@@ -45,6 +42,7 @@ Installation instructions can be found in [INSTALL.md](./INSTALL.md).
 git clone https://github.com/duterscmy/CD-MoE.git
 cd CD-MoE
 pip install -e .
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -84,13 +82,17 @@ python cd-moe/greedy_search/greedy_search_layer.py \
     --model $model_path \
     --dynamic-weight-file $expert_weight_file \
     --greedy-expert-file $greedy_search_expert_result_file \
-    --output $greedy_search_layer_result_file
+    --output $greedy_search_layer_result_file \
+    --prune-num-expert 6 \
+    --prune-num-layer 15
 ```
 
 ### 3. Fine-tune (Optional)
+The prune experts and layers in `cd-moe/exp_hyper.py` need to match the options in `cd-moe/finetune/finetune.py`, and replace the file paths in `cd-moe/modeling_deepseek.py` with real paths. You can use the `--no-c4` option to skip lm fine-tuning and directly fine-tune for downstream tasks.
 
 ```bash
-cp cd-moe/modeling_deepseek.py $model_path
+echo "num_route_experts=6;prune_layer_num=15" > cd-moe/exp_hyper.py
+cp cd-moe/modeling_deepseek.py cd-moe/exp_hyper.py $model_path
 python cd-moe/finetune/finetune.py \
     --input $sft_data \
     --c4-input $lm_data \
@@ -98,10 +100,10 @@ python cd-moe/finetune/finetune.py \
     --dynamic-weight-file $expert_weight_file \
     --greedy-expert-file $greedy_search_expert_result_file \
     --greedy-expert-file $greedy_search_layer_result_file \
-    --output-dir $sft_model_path
+    --output-dir $sft_model_path \
+    --prune-num-expert 6 \
+    --prune-num-layer 15
 ```
-
-You can use the `--no-c4` option to skip lm fine-tuning and directly fine-tune for downstream tasks.
 
 For some intermediate variables, we provide some already generated results. The open-source model and C4 training data need to be downloaded locally:
 - calibration_data_file: `cd-moe/data/calibration_data.json`
@@ -112,25 +114,15 @@ For some intermediate variables, we provide some already generated results. The 
 ## Evaluation
 
 Install [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)  
-Evaluate the pruned model:
+Evaluate the pruned model or the finetuned model:
 ```bash
 cp $expert_weight_file $greedy_search_expert_result_file $greedy_search_layer_result_file cd-moe/modeling_deepseek.py $model_path
 lm_eval --model hf \
-    --model_args $model_path \
-    --tasks arc-challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
+    --model_args pretrained=$model_path,dtype="bfloat16",trust_remote_code=True \
+    --tasks arc_challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
     --device cuda:0 \
     --batch_size 8
 ```
-Evaluate the fine-tuned model:
-```bash
-lm_eval --model hf \
-    --model_args $sft_model_path \
-    --tasks arc-challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
-    --device cuda:0 \
-    --batch_size 8 \
-    --ignore_mismatched_sizes
-```
-`--ignore_mismatched_sizes` option is necessary because, during fine-tuning, to save GPU memory, the unnecessary expert parameters in the model are set to empty, causing a mismatch between the parameter sizes saved in the model file and the default parameter sizes in the model config.
 
 ## Acknowledgement
 This repository is build upon the [Transformers](https://github.com/huggingface/transformers) repositories.
