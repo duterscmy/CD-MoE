@@ -123,10 +123,10 @@ The open-source model and C4 training data need to be downloaded locally:
 Install [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)  
 Evaluate the pruned model or the finetuned model:
 ```bash
-cp $expert_weight_file $greedy_search_expert_result_file $greedy_search_layer_result_file cd-moe/modeling_deepseek.py $model_path
+cp $expert_weight_file $greedy_search_expert_result_file $greedy_search_layer_result_file $model_path
 lm_eval --model hf \
     --model_args pretrained=$model_path,dtype="bfloat16",trust_remote_code=True \
-    --tasks arc_challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
+    --tasks arc_challenge,boolq,piqa,rte,openbookqa,winogrande,mmlu,hellaswag \
     --device cuda:0 \
     --batch_size 32
 # batch_size cannot be set to `auto` because of the model implement
