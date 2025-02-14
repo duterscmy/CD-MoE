@@ -128,9 +128,15 @@ parser.add_argument("--num-route-expert", type=int,
 args = parser.parse_args()
 
 pytorch_checkpoint_path = args.model
-# @param ["", "0", "0,1", "0,1,2"] {allow-input: true}
+batch_size = args.batch_size
+num_layer = args.num_layer
+num_expert = args.num_expert
+num_route_expert = args.num_route_expert
+output_path = args.output
+
+
 available_gpu_ids_str = "0"
-memory_per_gpu = "38GiB"  # @param ["", "38GiB"] {allow-input: true}
+memory_per_gpu = "80GiB"  # @param ["", "38GiB"] {allow-input: true}
 cpu_memory = '50GiB'  # @param ["50GiB"] {allow-input: true}
 model_dtype = 'bfloat16'  # @param ["float32", "bfloat16"]
 offload = False  # @param {type:"boolean"}
@@ -189,12 +195,6 @@ with open(args.input, 'r') as fp:
             questions.append(question)
 raw_questions = list(map(lambda x: x["text"], questions))
 print("calibration data size: {}".format(len(raw_questions)))
-
-batch_size = args.batch_size
-num_layer = args.num_layer
-num_expert = args.num_expert
-num_route_expert = args.num_route_expert
-output_path = args.output
 
 # load pre-computed expert weights
 dynamic_weight_tmp = json.load(open(args.dynamic_weight_file))

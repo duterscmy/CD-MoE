@@ -125,12 +125,10 @@ parser.add_argument("--num-layer", type=int, default=27,
 parser.add_argument("--num-expert", type=int,
                     default=64, help="默认为deepseek16B专家数")
 
-parser.add_argument("--prune-num-layer", default=15, type=int,
+parser.add_argument("--prune-num-layer", default=9, type=int,
                     help="剪枝层的数量")
 parser.add_argument("--prune-num-expert", default=6, type=int,
                     help="剪枝专家的数量")
-parser.add_argument("--prune-expert-strategy", default="greedy_jl", type=str,
-                    help="剪枝专家的策略")
 parser.add_argument("--reverse-experts", action="store_true",
                     help="如果指定，则剪枝时倒转expert顺序")
 
@@ -139,16 +137,15 @@ output = args.output
 batch_size = args.batch_size
 num_layer = args.num_layer
 num_expert = args.num_expert
-num_prune_expert = args.prune_expert
-num_prune_layer = args.prune_layer
-prune_expert_strategy = args.prune_expert_strategy
+num_prune_expert = args.prune_num_expert
+num_prune_layer = args.prune_num_layer
 pytorch_checkpoint_path = args.model
 dynamic_weight_file = args.dynamic_weight_file
 greedy_expert_file = args.greedy_expert_file
 
 # @param ["", "0", "0,1", "0,1,2"] {allow-input: true}
 available_gpu_ids_str = "0"
-memory_per_gpu = "38GiB"  # @param ["", "38GiB"] {allow-input: true}
+memory_per_gpu = "80GiB"  # @param ["", "38GiB"] {allow-input: true}
 cpu_memory = '50GiB'  # @param ["50GiB"] {allow-input: true}
 model_dtype = 'bfloat16'  # @param ["float32", "bfloat16"]
 offload = False  # @param {type:"boolean"}

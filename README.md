@@ -77,21 +77,23 @@ python cd-moe/greedy_search/greedy_search_expert.py \
 #### Greedy Search Layer
 
 ```bash
+prune_num_expert=6
+prune_num_lauer=9
 python cd-moe/greedy_search/greedy_search_layer.py \
     --input $calibration_data_file \
     --model $model_path \
     --dynamic-weight-file $expert_weight_file \
     --greedy-expert-file $greedy_search_expert_result_file \
     --output $greedy_search_layer_result_file \
-    --prune-num-expert 6 \
-    --prune-num-layer 15
+    --prune-num-expert $prune_num_expert \
+    --prune-num-layer $prune_num_layer
 ```
 
 ### 3. Fine-tune (Optional)
 The prune experts and layers in `cd-moe/exp_hyper.py` need to match the options in `cd-moe/finetune/finetune.py`, and replace the file paths in `cd-moe/modeling_deepseek.py` with real paths. You can use the `--no-c4` option to skip lm fine-tuning and directly fine-tune for downstream tasks.
 
 ```bash
-echo "num_route_experts=6;prune_layer_num=15" > cd-moe/exp_hyper.py
+echo "num_route_experts=${prune_num_expert};prune_layer_num=${prune_num_layer}" > cd-moe/exp_hyper.py
 cp cd-moe/modeling_deepseek.py cd-moe/exp_hyper.py $model_path
 python cd-moe/finetune/finetune.py \
     --input $sft_data \
@@ -99,17 +101,21 @@ python cd-moe/finetune/finetune.py \
     --model $model_path \
     --dynamic-weight-file $expert_weight_file \
     --greedy-expert-file $greedy_search_expert_result_file \
-    --greedy-expert-file $greedy_search_layer_result_file \
+    --greedy-layer-file $greedy_search_layer_result_file \
     --output-dir $sft_model_path \
-    --prune-num-expert 6 \
-    --prune-num-layer 15
+    --prune-num-expert $prune_num_expert \
+    --prune-num-layer $prune_num_layer
 ```
 
-For some intermediate variables, we provide some already generated results. The open-source model and C4 training data need to be downloaded locally:
-- calibration_data_file: `cd-moe/data/calibration_data.json`
+For some intermediate variables, we provide some already generated results:
+- calibration_data_file(100 c4 texts): `cd-moe/data/calibration_data.json`
 - expert_weight_file: `cd-moe/data/dynamic_weight.json`
 - greedy_search_expert_result_file: `cd-moe/data/layer_idx_to_expert_idx.greedy_jl.json`
 - greedy_search_layer_result_file: `cd-moe/data/layer_idx_order.e6.json` and `cd-moe/data/layer_idx_order.e0.json`
+.The open-source model and C4 training data need to be downloaded locally:
+- [DeepseekMoE-16B](https://huggingface.co/deepseek-ai/deepseek-moe-16b-base)
+- [C4 dataset](https://huggingface.co/datasets/allenai/c4)
+- [SFT datasets](https://huggingface.co/datasets/pengxiang/OwLore_Dataset)
 
 ## Evaluation
 
@@ -121,7 +127,8 @@ lm_eval --model hf \
     --model_args pretrained=$model_path,dtype="bfloat16",trust_remote_code=True \
     --tasks arc_challenge,boolq,piqa,rte,obqa,winogrande,mmlu,hellaswag \
     --device cuda:0 \
-    --batch_size 8
+    --batch_size 32
+# batch_size cannot be set to `auto` because of the model implement
 ```
 
 ## Acknowledgement
