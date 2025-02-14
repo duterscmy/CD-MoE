@@ -78,7 +78,7 @@ python cd-moe/greedy_search/greedy_search_expert.py \
 
 ```bash
 prune_num_expert=6
-prune_num_lauer=9
+prune_num_layer=9
 python cd-moe/greedy_search/greedy_search_layer.py \
     --input $calibration_data_file \
     --model $model_path \
@@ -112,7 +112,8 @@ For some intermediate variables, we provide some already generated results:
 - expert_weight_file: `cd-moe/data/dynamic_weight.json`
 - greedy_search_expert_result_file: `cd-moe/data/layer_idx_to_expert_idx.greedy_jl.json`
 - greedy_search_layer_result_file: `cd-moe/data/layer_idx_order.e6.json` and `cd-moe/data/layer_idx_order.e0.json`
-.The open-source model and C4 training data need to be downloaded locally:
+
+The open-source model and C4 training data need to be downloaded locally:
 - [DeepseekMoE-16B](https://huggingface.co/deepseek-ai/deepseek-moe-16b-base)
 - [C4 dataset](https://huggingface.co/datasets/allenai/c4)
 - [SFT datasets](https://huggingface.co/datasets/pengxiang/OwLore_Dataset)
