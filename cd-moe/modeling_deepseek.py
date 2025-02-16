@@ -397,7 +397,7 @@ layer_num = 27
 # num_route_experts = 6
 # prune_layer_num = 15
 
-current_dir = "/home/work/mt_cmy/programs/CD-MoE/cd-moe/data"  # change to your repo dir
+current_dir = ""  # change to your repo dir
 
 # greedy search layer result
 layer_result_file = "layer_idx_order.e6.json" if num_route_experts == 6 else "layer_idx_order.e0.json"
