@@ -1,6 +1,6 @@
 ## CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING
 
-Official PyTorch implementation of CD-MOE, as presented in our paper: [CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING](https://arxiv.org/abs/2412.00069)
+Official PyTorch implementation of CD-MOE
 
 **Paper**: [https://arxiv.org/abs/2412.00069](https://arxiv.org/abs/2412.00069)
 
