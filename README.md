@@ -1,10 +1,12 @@
-## CONDENSE, DON’T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING
+## CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING
 
-Official PyTorch implementation of CD-MOE, as presented in our paper: CONDENSE, DON’T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING
+Official PyTorch implementation of CD-MOE, as presented in our paper: [CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING](https://arxiv.org/abs/2412.00069)
 
-[Mingyu Cao](https://scholar.google.com/citations?user=nq7uHwQAAAAJ&hl=en&oi=ao), [Gen Li](https://scholar.google.com/citations?hl=en&user=4nzCXV8AAAAJ), [Jie Ji](https://scholar.google.com/citations?hl=en&user=aoGaDN4AAAAJ), [Jiaqi Zhang](www.baidu.com), [Xiaolong Ma](https://xiaolongma2016.com/), [Shiwei Liu](https://shiweiliuiiiiiii.github.io/), [Lu Yin](https://luuyin.com//)
+**Paper**: [https://arxiv.org/abs/2412.00069](https://arxiv.org/abs/2412.00069)
 
-**Shopee, Clemson University, Meituan, University of Oxford, University of Surrey**
+[Mingyu Cao](https://scholar.google.com/citations?user=nq7uHwQAAAAJ&hl=en&oi=ao), [Gen Li](https://scholar.google.com/citations?hl=en&user=4nzCXV8AAAAJ), [Jie Ji](https://scholar.google.com/citations?hl=en&user=aoGaDN4AAAAJ), [Jiaqi Zhang](https://scholar.google.com/citations?user=hvWVWfIAAAAJ&hl=en), [Ajay Jaiswal](https://ajay1994.github.io/), [Li Shen](https://scholar.google.com/citations?user=yVhgENIAAAAJ&hl=zh-TW), [Xiaolong Ma](https://xiaolongma2016.com/), [Shiwei Liu](https://shiweiliuiiiiiii.github.io/), [Lu Yin](https://luuyin.com//)
+
+**University of Surrey, Clemson University, Meituan, University of Texas at Austin, Sun Yat-sen University, The University of Arizona, University of Oxford, ELLIS Institute Tubingen, Max Planck Institute for Intelligent Systems, Tubingen AI Center**
 
 ## Abstract
 Mixture-of-Experts (MoE)  has garnered significant attention for their ability to scale up neural networks while utilizing the same or even fewer active parameters. However, MoE does not relieve the massive memory requirements of networks, which limits their practicality in real-world applications, especially in the era of large language models (LLMs). While recent work explores the possibility of removing entire layers of MoE to reduce memory, the performance degradation is still notable. 
