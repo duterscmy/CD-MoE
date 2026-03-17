@@ -2,7 +2,10 @@
 
 Official PyTorch implementation of CD-MOE
 
-**Paper**: [https://arxiv.org/abs/2412.00069](https://arxiv.org/abs/2412.00069)
+[![arXiv](https://img.shields.io/badge/arXiv-2412.00069-b31b1b.svg)](https://arxiv.org/abs/2412.00069)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://duterscmy.github.io/cdmoe-introduction/)
+
+[**Paper**](https://arxiv.org/abs/2412.00069) | [**Project Page**](https://duterscmy.github.io/cdmoe-introduction/)
 
 [Mingyu Cao](https://scholar.google.com/citations?user=nq7uHwQAAAAJ&hl=en&oi=ao), [Gen Li](https://scholar.google.com/citations?hl=en&user=4nzCXV8AAAAJ), [Jie Ji](https://scholar.google.com/citations?hl=en&user=aoGaDN4AAAAJ), [Jiaqi Zhang](https://scholar.google.com/citations?user=hvWVWfIAAAAJ&hl=en), [Ajay Jaiswal](https://ajay1994.github.io/), [Li Shen](https://scholar.google.com/citations?user=yVhgENIAAAAJ&hl=zh-TW), [Xiaolong Ma](https://xiaolongma2016.com/), [Shiwei Liu](https://shiweiliuiiiiiii.github.io/), [Lu Yin](https://luuyin.com//)
 
