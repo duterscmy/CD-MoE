@@ -2,8 +2,8 @@
 
 Official PyTorch implementation of CD-MOE
 
-[![arXiv](https://img.shields.io/badge/arXiv-2412.00069-b31b1b.svg)](https://arxiv.org/abs/2412.00069)
-[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://duterscmy.github.io/cdmoe-introduction/)
+<!-- [![arXiv](https://img.shields.io/badge/arXiv-2412.00069-b31b1b.svg)](https://arxiv.org/abs/2412.00069)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://duterscmy.github.io/cdmoe-introduction/) -->
 
 [**Paper**](https://arxiv.org/abs/2412.00069) | [**Project Page**](https://duterscmy.github.io/cdmoe-introduction/)
 
