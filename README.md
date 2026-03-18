@@ -1,8 +1,15 @@
-<h2>## CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING</h2>
-<p style="text-align: center;"><img src="images/logo.png" alt="Project Logo" width="300" /></p>
-<p style="text-align: center;"><a href="https://arxiv.org/abs/2412.00069"><strong>Paper</strong></a> | <a href="https://duterscmy.github.io/cdmoe-introduction/"><strong>Project Page</strong></a></p>
+<h2 align="center">## CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING</h2>
 
-<p style="text-align: center;">
+<p align="center">
+  <img src="images/logo.png" alt="Project Logo" width="300" />
+</p>
+
+<p align="center">
+  <a href="https://arxiv.org/abs/2412.00069"><strong>Paper</strong></a> | 
+  <a href="https://duterscmy.github.io/cdmoe-introduction/"><strong>Project Page</strong></a>
+</p>
+
+<p align="center">
   <a href="https://scholar.google.com/citations?user=nq7uHwQAAAAJ&hl=en&oi=ao">Mingyu Cao</a>, 
   <a href="https://scholar.google.com/citations?hl=en&user=4nzCXV8AAAAJ">Gen Li</a>, 
   <a href="https://scholar.google.com/citations?hl=en&user=aoGaDN4AAAAJ">Jie Ji</a>, 
@@ -14,9 +21,9 @@
   <a href="https://luuyin.com/">Lu Yin</a>
 </p>
 
-<p style="text-align: center;">
-  University of Surrey, Clemson University, Meituan, University of Texas at Austin, 
-  Sun Yat-sen University, The University of Arizona, University of Oxford, 
+<p align="center">
+  University of Surrey, Clemson University, Meituan, University of Texas at Austin, <br />
+  Sun Yat-sen University, The University of Arizona, University of Oxford, <br />
   ELLIS Institute Tubingen, Max Planck Institute for Intelligent Systems, Tubingen AI Center
 </p>
 
