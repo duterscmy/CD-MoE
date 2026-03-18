@@ -1,15 +1,24 @@
-## CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING
+<h2>## CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING</h2>
+<p style="text-align: center;"><img src="images/logo.png" alt="Project Logo" width="300" /></p>
+<p style="text-align: center;"><a href="https://arxiv.org/abs/2412.00069"><strong>Paper</strong></a> | <a href="https://duterscmy.github.io/cdmoe-introduction/"><strong>Project Page</strong></a></p>
 
-Official PyTorch implementation of CD-MOE
+<p style="text-align: center;">
+  <a href="https://scholar.google.com/citations?user=nq7uHwQAAAAJ&hl=en&oi=ao">Mingyu Cao</a>, 
+  <a href="https://scholar.google.com/citations?hl=en&user=4nzCXV8AAAAJ">Gen Li</a>, 
+  <a href="https://scholar.google.com/citations?hl=en&user=aoGaDN4AAAAJ">Jie Ji</a>, 
+  <a href="https://scholar.google.com/citations?user=hvWVWfIAAAAJ&hl=en">Jiaqi Zhang</a>, 
+  <a href="https://ajay1994.github.io/">Ajay Jaiswal</a>, 
+  <a href="https://scholar.google.com/citations?user=yVhgENIAAAAJ&hl=zh-TW">Li Shen</a>, 
+  <a href="https://xiaolongma2016.com/">Xiaolong Ma</a>, 
+  <a href="https://shiweiliuiiiiiii.github.io/">Shiwei Liu</a>, 
+  <a href="https://luuyin.com/">Lu Yin</a>
+</p>
 
-<!-- [![arXiv](https://img.shields.io/badge/arXiv-2412.00069-b31b1b.svg)](https://arxiv.org/abs/2412.00069)
-[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://duterscmy.github.io/cdmoe-introduction/) -->
-
-[**Paper**](https://arxiv.org/abs/2412.00069) | [**Project Page**](https://duterscmy.github.io/cdmoe-introduction/)
-
-[Mingyu Cao](https://scholar.google.com/citations?user=nq7uHwQAAAAJ&hl=en&oi=ao), [Gen Li](https://scholar.google.com/citations?hl=en&user=4nzCXV8AAAAJ), [Jie Ji](https://scholar.google.com/citations?hl=en&user=aoGaDN4AAAAJ), [Jiaqi Zhang](https://scholar.google.com/citations?user=hvWVWfIAAAAJ&hl=en), [Ajay Jaiswal](https://ajay1994.github.io/), [Li Shen](https://scholar.google.com/citations?user=yVhgENIAAAAJ&hl=zh-TW), [Xiaolong Ma](https://xiaolongma2016.com/), [Shiwei Liu](https://shiweiliuiiiiiii.github.io/), [Lu Yin](https://luuyin.com//)
-
-**University of Surrey, Clemson University, Meituan, University of Texas at Austin, Sun Yat-sen University, The University of Arizona, University of Oxford, ELLIS Institute Tubingen, Max Planck Institute for Intelligent Systems, Tubingen AI Center**
+<p style="text-align: center;">
+  University of Surrey, Clemson University, Meituan, University of Texas at Austin, 
+  Sun Yat-sen University, The University of Arizona, University of Oxford, 
+  ELLIS Institute Tubingen, Max Planck Institute for Intelligent Systems, Tubingen AI Center
+</p>
 
 ## Abstract
 Mixture-of-Experts (MoE)  has garnered significant attention for their ability to scale up neural networks while utilizing the same or even fewer active parameters. However, MoE does not relieve the massive memory requirements of networks, which limits their practicality in real-world applications, especially in the era of large language models (LLMs). While recent work explores the possibility of removing entire layers of MoE to reduce memory, the performance degradation is still notable. 
