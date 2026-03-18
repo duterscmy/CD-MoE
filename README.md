@@ -1,4 +1,4 @@
-<h2 align="center">## CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING</h2>
+<h2 align="center">CONDENSE, DON'T JUST PRUNE: ENHANCING EFFICIENCY AND PERFORMANCE IN MOE LAYER PRUNING</h2>
 
 <p align="center">
   <img src="images/logo.png" alt="Project Logo" width="300" />
